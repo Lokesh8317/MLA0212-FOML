@@ -1,0 +1,59 @@
+# Import necessary libraries
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+
+# Load the dataset from a CSV file
+data_path = 'C:/Users/Pavan/Downloads/student-scores.csv'  # Change this to the path of your dataset
+data = pd.read_csv(data_path)
+
+# Assuming your dataset has a column named 'target' which is the dependent variable
+# and the rest are independent variables. Modify as per your dataset structure.
+target_column = 'Amount'  # Change this to your target column name
+
+# Identify columns with date-time strings
+datetime_columns = ['Fradulent']  # Change this to your actual date-time column names
+
+# Convert date-time columns to numerical features (e.g., timestamps)
+for col in datetime_columns:
+    data[col] = pd.to_datetime(data[col], errors='coerce').astype(int) / 10**9  # Convert to seconds since epoch
+
+# Convert all other columns to numeric (float), forcing errors to NaN
+data = data.apply(pd.to_numeric, errors='coerce')
+
+# Drop rows with NaN values if any
+data = data.dropna()
+
+# Explore the data
+print(data.head())
+print(data.describe())
+
+# Split the data into features and target variable
+X = data.drop(target_column, axis=1)
+y = data[target_column]
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Train the linear regression model
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+# Make predictions on the test set
+y_pred = model.predict(X_test)
+
+# Evaluate the model
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+print(f"Mean Squared Error: {mse}")
+print(f"R^2 Score: {r2}")
+
+# Plot the results
+plt.scatter(y_test, y_pred)
+plt.xlabel("Actual Values")
+plt.ylabel("Predicted Values")
+plt.title("Actual vs Predicted Values")
+plt.show()
