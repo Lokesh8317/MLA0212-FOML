@@ -1,0 +1,69 @@
+import numpy as np
+import random
+
+# Define parameters
+alpha = 0.1    # Learning rate
+gamma = 0.9    # Discount factor
+epsilon = 0.1  # Exploration-exploitation trade-off
+
+# States: (Market_trend, Competitor_price)
+states = [(0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (1, 2), (2, 0), (2, 1), (2, 2)]
+state_mapping = {state: i for i, state in enumerate(states)}
+
+# Actions: 0 (low), 1 (medium), 2 (high)
+actions = [0, 1, 2]
+
+# Initialize Q-table
+Q = np.zeros((len(states), len(actions)))
+
+# Define reward function
+def reward(state, action):
+    market_trend, competitor_price = state
+    if action == 0:  # Low price
+        return 10 + 5 * market_trend - 5 * competitor_price
+    elif action == 1:  # Medium price
+        return 15 + 10 * market_trend - 10 * competitor_price
+    elif action == 2:  # High price
+        return 20 + 15 * market_trend - 15 * competitor_price
+
+# Define state transition function
+def next_state(state, action):
+    market_trend, competitor_price = state
+    new_trend = np.random.choice([0, 1, 2], p=[0.3, 0.4, 0.3])
+    new_competitor_price = np.random.choice([0, 1, 2], p=[0.3, 0.4, 0.3])
+    return (new_trend, new_competitor_price)
+
+# Training the Q-learning agent
+num_episodes = 1000
+for _ in range(num_episodes):
+    state = random.choice(states)
+    while True:
+        state_idx = state_mapping[state]
+
+        # Epsilon-greedy action selection
+        if random.uniform(0, 1) < epsilon:
+            action = random.choice(actions)
+        else:
+            action = np.argmax(Q[state_idx])
+
+        # Take action and observe reward and next state
+        r = reward(state, action)
+        next_state_ = next_state(state, action)
+        next_state_idx = state_mapping[next_state_]
+
+        # Q-learning update
+        Q[state_idx, action] = Q[state_idx, action] + alpha * (r + gamma * np.max(Q[next_state_idx]) - Q[state_idx, action])
+
+        # Transition to next state
+        state = next_state_
+
+        if random.uniform(0, 1) < 0.1:  # End the episode with 10% probability
+            break
+
+# Output: Optimal policy
+optimal_policy = [np.argmax(Q[state_mapping[state]]) for state in states]
+optimal_policy_mapping = {state: action for state, action in zip(states, optimal_policy)}
+
+print("Optimal Pricing Policy:")
+for state, action in optimal_policy_mapping.items():
+    print(f"Market Trend: {['up', 'stable', 'down'][state[0]]}, Competitor Price: {['low', 'medium', 'high'][state[1]]} -> Optimal Price: {['low', 'medium', 'high'][action]}")
