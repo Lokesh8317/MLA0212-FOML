@@ -1,0 +1,35 @@
+import numpy as np
+from sklearn import hmm
+
+# Generate synthetic time series data (for demonstration purposes)
+np.random.seed(42)
+n_samples = 300
+n_states = 3
+n_features = 1
+
+# Simulate some data (in a real scenario, you would use actual time series data)
+# Assume the data follows three states with different means
+means = np.array([0.0, 5.0, 10.0])
+state_sequence = np.random.choice(n_states, size=n_samples)
+# Generate observations for each state in state_sequence
+observations = np.zeros((n_samples, n_features))
+
+for i in range(n_samples):
+    state = state_sequence[i]
+    observations[i] = np.random.normal(loc=means[state], scale=1.0, size=n_features)
+
+# Fit a Gaussian HMM to the data
+model = hmm.GaussianHMM(n_components=n_states, covariance_type="diag", n_iter=100, random_state=42)
+model.fit(observations)
+
+# Predict the state sequence based on the observations
+predicted_states = model.predict(observations)
+
+# Display the model parameters and predictions
+print("Transition Matrix:\n", model.transmat_)
+print("Means:\n", model.means_)
+print("Covariances:\n", model.covars_)
+print("Predicted States:\n", predicted_states)
+
+# For clarity, here is the state sequence that was used to generate the observations
+print("True States:\n", state_sequence)
