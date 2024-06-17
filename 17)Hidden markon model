@@ -1,0 +1,48 @@
+import pandas as pd
+from pgmpy.models import BayesianNetwork
+from pgmpy.factors.discrete import TabularCPD
+from pgmpy.inference import VariableElimination
+from pgmpy.estimators import MaximumLikelihoodEstimator
+
+# Step 1: Define the Bayesian Network
+model = BayesianNetwork([('A', 'C'), ('B', 'C')])
+
+# Define the CPDs
+cpd_a = TabularCPD(variable='A', variable_card=2, values=[[0.6], [0.4]])
+cpd_b = TabularCPD(variable='B', variable_card=2, values=[[0.7], [0.3]])
+cpd_c = TabularCPD(variable='C', variable_card=2,
+                   values=[[0.9, 0.6, 0.7, 0.1],
+                           [0.1, 0.4, 0.3, 0.9]],
+                   evidence=['A', 'B'],
+                   evidence_card=[2, 2])
+
+# Add CPDs to the model
+model.add_cpds(cpd_a, cpd_b, cpd_c)
+
+# Check model consistency
+assert model.check_model()
+
+print("Model successfully created and validated.")
+
+# Step 2: Perform Inference
+inference = VariableElimination(model)
+
+# Given new evidence, find the posterior probability of 'C'
+new_evidence = {'A': 1, 'B': 0}
+posterior_c = inference.query(variables=['C'], evidence=new_evidence)
+
+print("Posterior distribution of C given A=1 and B=0:")
+print(posterior_c)
+
+# Step 3: Update the Model with New Data
+data = pd.DataFrame(data={'A': [0, 1, 0, 1, 0, 1, 0, 1],
+                          'B': [0, 0, 1, 1, 0, 0, 1, 1],
+                          'C': [0, 1, 0, 1, 0, 1, 0, 1]})
+
+# Update the CPDs using MLE
+model.fit(data, estimator=MaximumLikelihoodEstimator)
+
+# Check the updated model
+print("Updated CPDs:")
+for cpd in model.get_cpds():
+    print(cpd)
